@@ -1,7 +1,13 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[41]:
+
+
 import matplotlib.pyplot as plt 
 import sys as sys  
 import numpy as np 
-#LBM numerics
+
 
 def GetLatice(D=2,Q=9):
     #ex = np.array([0,1,0,-1,0,1,-1,-1,1])
@@ -79,7 +85,7 @@ def CalcMacro(f,ex,ey,Nx,Ny,Q):
             
     return ux,uy,rho
 
-def Collision(f,feq,thau,Nx,Ny,Q,Dt=1,Bnd = None,with_boundaries = False):
+def Collision(f,feq,thau,Nx,Ny,Q,Dt=1,Bnd = None,with_boundaries = True):
     #Input 
     # f[i,j,q] :::
     # feq[i,j,q] :::
@@ -104,7 +110,7 @@ def Collision(f,feq,thau,Nx,Ny,Q,Dt=1,Bnd = None,with_boundaries = False):
                     fstar[i,j,q] = f[i,j,q] -  (f[i,j,q]-feq[i,j,q])/thau
                 
     return fstar
-def Streaming(f,Nx,Ny,Q,Bnd = None,with_boundaries = False):
+def Streaming(f,Nx,Ny,Q,Bnd = None,with_boundaries = True):
     #Input 
     # f[i,j,q] ::: 
     # Nx :::
@@ -239,22 +245,20 @@ def WallBnd(fold,f,label,normalx,normaly,Nx,Ny):
 def WallBnd2(fold,f,label,normalx,normaly,Nx,Ny,cs,w,ex,ey): 
     fbnd = f
     for i in range(Nx):
-        j = 0 
         ip = (i + 1 + Nx) % Nx
         im = (i - 1 + Nx) % Nx
         jp = 1
         # bottom Wall 
-        fbnd[i,j,0] = fold[i,j,0]
-        fbnd[i,j,1] = fold[im,j,1]
-        fbnd[i,j,2] = fold[i,j,6] #
-        fbnd[i,j,3] = fold[i,j,7] #
-        fbnd[i,j,4] = fold[i,j,8] #
-        fbnd[i,j,5] = fold[ip,j,5]
-        fbnd[i,j,6] = fold[ip,jp,6]
-        fbnd[i,j,7] = fold[i,jp,7]
-        fbnd[i,j,8] = fold[im,jp,8]
+        fbnd[i,0,0] = fold[0,0,0]
+        fbnd[i,0,1] = fold[im,0,1]
+        fbnd[i,0,2] = fold[i,0,6] #
+        fbnd[i,0,3] = fold[i,0,7] #
+        fbnd[i,0,4] = fold[i,0,8] #
+        fbnd[i,0,5] = fold[ip,0,5]
+        fbnd[i,0,6] = fold[ip,jp,6]
+        fbnd[i,0,7] = fold[i,jp,7]
+        fbnd[i,0,8] = fold[im,jp,8]
     for i in range(Nx):
-        j = Ny-1
         ip = (i + 1 + Nx) % Nx
         im = (i - 1 + Nx) % Nx
         jm = Ny-2
@@ -274,13 +278,13 @@ def WallBnd2(fold,f,label,normalx,normaly,Nx,Ny,cs,w,ex,ey):
         cs_squared = cs * cs 
         Uwx = 0.1 * cs 
         Uwy = 0.
-        fbnd[i,j,6] = fold[i,j,2] -  w[2]*1.*(ex[2]*Uwx + ey[2]*Uwy)/cs_squared#(1/(6*c))*Uw
-        fbnd[i,j,7] = fold[i,j,3] - w[3]*1.*(ex[3]*Uwx + ey[3]*Uwy)/cs_squared
-        fbnd[i,j,8] = fold[i,j,4] - w[4]*1.*(ex[4]*Uwx + ey[4]*Uwy)/cs_squared
+        fbnd[i,Ny-1,6] = fold[i,Ny-1,2] -  w[2]*1.*(ex[2]*Uwx + ey[2]*Uwy)/cs_squared#(1/(6*c))*Uw
+        fbnd[i,Ny-1,7] = fold[i,Ny-1,3] - w[3]*1.*(ex[3]*Uwx + ey[3]*Uwy)/cs_squared
+        fbnd[i,Ny-1,8] = fold[i,Ny-1,4] - w[4]*1.*(ex[4]*Uwx + ey[4]*Uwy)/cs_squared
 
     return fbnd
 
-def WallBnd3(fold,f,label,normalx,normaly,Nx,Ny,Q,cs,w,ex,ey): 
+def WallBnd3(fold,f,label,normalx,normaly,Nx,Ny,cs,w,ex,ey): 
     fbnd = f
     for i in range(Nx):
         j = 0 
@@ -368,3 +372,140 @@ def WallBnd3(fold,f,label,normalx,normaly,Nx,Ny,Q,cs,w,ex,ey):
        
 
     return fbnd
+
+
+# In[48]:
+
+
+#Physical parameters 
+nu = 1
+Pref = 101325
+Tref = 300
+Rgas = 287.15
+vforce = 0
+#Latice 
+D = 2 
+Q = 9 
+#Time step 
+Dt = 0.000001
+#Create Fluid domain and Grid 
+Dx = 0.015#0.001
+Lx = 0.9#0.1
+Ly = 0.3
+Nx = np.int((Lx/Dx) + 1)
+Ny = np.int((Ly/Dx) + 1)
+x = np.linspace(-Lx/2,Lx/2,Nx)
+y = np.linspace(-Ly/2,Ly/2,Ny)
+xv, yv = np.meshgrid(x, y,indexing = 'ij') 
+#Initial condition 
+ux = np.zeros((Nx,Ny))
+uy = np.zeros((Nx,Ny))
+P = np.ones((Nx,Ny)) * Pref
+for i in range(Nx):
+    for j in range(Ny):
+        R = 0.004/Dx
+        xCentered =  i-(Nx-1.)/2.#xv[i,j] 
+        yCentered =  j-(Ny-1.)/2.#yv[i,j]
+        #P[i,j] = Pref+ 0.1 * Pref * np.exp(-(xCentered*xCentered+yCentered*yCentered)/(4*R*R))
+rho = P/(Rgas*Tref) 
+print(rho)
+
+
+# In[49]:
+
+
+label = np.zeros((Nx,Ny))
+normaly = np.zeros((Nx,Ny))
+normalx = np.zeros((Nx,Ny))
+label[:,0] = 1 
+label[:,Ny-1] = 1 
+label[0,:] = 1 
+label[Nx-1,:] = 1 
+
+normaly[:,0] = 1
+normalx[:,0] = 0
+normaly[:,Ny-1] = -1
+normalx[:,Ny-1] = 0
+
+plt.scatter(xv,yv,c=label)
+plt.show()
+
+
+print(label[:,Ny-1] == 1)
+
+
+# In[53]:
+
+
+ex, ey, w, cs = GetLatice(D=D,Q=Q)
+#ux = np.ones((Nx,Ny))*0.032 
+# Calc tau
+Nulb = (nu*Dt)/(Dx * Dx)
+thau = (Nulb/(cs*cs)) + 0.5
+# Scale Macro var 
+rho = rho *((Rgas*Tref)/Pref)
+vforce = vforce * ((Dt*Dt)/Dx)
+#
+levels1 = np.linspace(0.99, 1.11, 20)
+levels2 = np.linspace(0.99, 1.11, 20)
+levels3 = np.linspace(0.99, 1.11, 20)
+#Temporal loop
+f = CalcFeq(rho,ux,uy,ex,ey,w,cs,Nx,Ny,Q,thau,srct =[vforce,0])
+for i in range(1001):
+    feq = CalcFeq(rho,ux,uy,ex,ey,w,cs,Nx,Ny,Q,thau,srct =[vforce,0])
+    fstar = Collision(f,feq,thau,Nx,Ny,Q,Bnd = label,with_boundaries = True)
+    fold = fstar 
+    fstream = Streaming(fstar,Nx,Ny,Q,Bnd = label,with_boundaries = True)
+    f = fstream
+    #fbnd = WallBnd(fold,f,label,normalx,normaly,Nx,Ny)
+    fbnd = WallBnd3(fold,f,label,normalx,normaly,Nx,Ny,cs,w,ex,ey)
+    f = fbnd
+    ux,uy,rho = CalcMacro(fstream,ex,ey,Nx,Ny,Q)
+    
+    if i%10 == 0 :
+        print(i)
+    if i%100 == 0:
+        #fig = plt.figure(figsize = (12,4))
+        #ax1 = fig.add_subplot(131)
+        #ax2 = fig.add_subplot(132)
+        #ax3 = fig.add_subplot(133)
+        #z1_plot=ax1.contourf(xv, yv, rho,cmap = 'jet')
+        #ax2.contourf(xv, yv, ux,cmap = 'jet')
+        #ax3.contourf(xv, yv, uy,cmap = 'jet')
+        #fig.colorbar(z1_plot,cax=ax1)
+        #plt.show()
+        #plt.close()
+        plt.contourf(xv,yv,ux,cmap = 'jet')
+        plt.colorbar()
+        plt.show()
+        plt.close()
+        
+
+
+# In[54]:
+
+
+print(thau)
+plt.plot(ux[int(Nx/2),:],'o')
+plt.show()
+
+plt.plot(uy[int(Nx/2),:],'o')
+plt.show()
+
+plt.plot(rho[int(Nx/2),:],'o')
+plt.show()
+
+
+# In[55]:
+
+
+plt.contourf(xv,yv,uy,cmap = 'jet')
+plt.colorbar()
+plt.show()
+plt.close()
+
+plt.contourf(xv,yv,rho,cmap = 'jet')
+plt.colorbar()
+plt.show()
+plt.close()
+
