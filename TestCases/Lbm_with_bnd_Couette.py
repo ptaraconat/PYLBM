@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import sys as sys 
 sys.path.append('../src/')
 from lbm_num import * 
+import termplotlib as tpl
 
 
 # In[2]:
@@ -115,6 +116,11 @@ for i in range(5001):
         plt.savefig('Couette'+str(i)+'png',format = 'png')
         plt.show()
         plt.close()
+
+        y = np.linspace(0,Ly,Ny)
+        fig = tpl.figure()
+        fig.plot(y,ux[int(Nx/2),:])
+        fig.show()
         
 
 
