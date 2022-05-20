@@ -233,8 +233,14 @@ class D2Q9(Solver):
             j = j + 1
         return fbnd
 
-    def Bnd_HWBB(self,fold,f,label,normalx,normaly,Nx,Ny):
+    def Bnd_HWBB(self,fold,f,label,normalx,normaly,Nx,Ny,Inletx,Inlety):
         fbnd = f 
+        w = self.w
+        ex = self.ex
+        ey = self.ey
+        cs = self.cs
+        Q = self.Q
+        cs_squared = cs * cs 
         for i in range(Nx):
             for j in range(Ny):
                 ip = (i + 1 + Nx) % Nx
@@ -244,16 +250,23 @@ class D2Q9(Solver):
                 if label[i,j] == 1 :
                     #Bottom wall
                     if normalx[i,j] == 0 and normaly[i,j] == 1 : 
+                        Uwx = Inletx[i,j] #0.1*cs #Inletx[i,j]
+                        Uwy = Inlety[i,j] #0. #Inlety[i,j]
+                        dens = 1.
                         fbnd[i,j,0] = fold[i,j,0]
                         fbnd[i,j,1] = fold[im,j,1]
-                        fbnd[i,j,2] = fold[i,j,6] # HWBB
-                        fbnd[i,j,3] = fold[i,j,7] # HWBB
-                        fbnd[i,j,4] = fold[i,j,8] # HWBB
+                        fbnd[i,j,2] = fold[i,j,6] - w[6]*dens*(ex[6]*Uwx + ey[6]*Uwy)/cs_squared# HWBB
+                        fbnd[i,j,3] = fold[i,j,7] - w[7]*dens*(ex[7]*Uwx + ey[7]*Uwy)/cs_squared# HWBB
+                        fbnd[i,j,4] = fold[i,j,8] - w[8]*dens*(ex[8]*Uwx + ey[8]*Uwy)/cs_squared# HWBB
                         fbnd[i,j,5] = fold[ip,j,5]
                         fbnd[i,j,6] = fold[ip,jp,6]
                         fbnd[i,j,7] = fold[i,jp,7]
                         fbnd[i,j,8] = fold[im,jp,8]
+
                     if normalx[i,j] == 0 and normaly[i,j] == -1 :
+                        Uwx = Inletx[i,j] #0.1*cs #Inletx[i,j]
+                        Uwy = Inlety[i,j] #0. #Inlety[i,j]
+                        dens = 1.
                         #Top Wall 
                         fbnd[i,j,0] = fold[i,j,0]
                         fbnd[i,j,1] = fold[im,j,1]
@@ -261,31 +274,74 @@ class D2Q9(Solver):
                         fbnd[i,j,3] = fold[i,jm,3]
                         fbnd[i,j,4] = fold[ip,jm,4]
                         fbnd[i,j,5] = fold[ip,j,5]
-                        fbnd[i,j,6] = fold[i,j,2] #
-                        fbnd[i,j,7] = fold[i,j,3] #
-                        fbnd[i,j,8] = fold[i,j,4] #   
+                        fbnd[i,j,6] = fold[i,j,2] - w[2]*dens*(ex[2]*Uwx + ey[2]*Uwy)/cs_squared# HWBB # HWBB
+                        fbnd[i,j,7] = fold[i,j,3] - w[3]*dens*(ex[3]*Uwx + ey[3]*Uwy)/cs_squared# HWBB# HWBB
+                        fbnd[i,j,8] = fold[i,j,4] - w[4]*dens*(ex[4]*Uwx + ey[4]*Uwy)/cs_squared# HWBB# HWBB
+
                     if normalx[i,j] == 1 and normaly[i,j] == 0 : 
                         #Left wall 
-                        print('To be coded')
-                        fbnd[i,j,0] = fold[i,j,0]
-                        fbnd[i,j,1] = fold[im,j,1]
-                        fbnd[i,j,2] = fold[im,jm,2]
+                        #print('To be coded')
+                        #fbnd[i,j,0] = fold[i,j,0]
+                        #fbnd[i,j,1] = fold[im,j,1]
+                        #fbnd[i,j,2] = fold[im,jm,2]
+                        #fbnd[i,j,3] = fold[i,jm,3]
+                        #fbnd[i,j,4] = fold[ip,jm,4]
+                        #fbnd[i,j,5] = fold[ip,j,5]
+                        #fbnd[i,j,6] = fold[ip,jp,6]
+                        #fbnd[i,j,7] = fold[i,jp,7]
+                        #fbnd[i,j,8] = fold[im,jp,8]
+
+                        Uwx = Inletx[i,j] #0.1*cs #Inletx[i,j]
+                        Uwy = Inlety[i,j] #0. #Inlety[i,j]
+                        dens = 1.
+
+                        fbnd[i,j,0] = fold[i,j,0] 
                         fbnd[i,j,3] = fold[i,jm,3]
                         fbnd[i,j,4] = fold[ip,jm,4]
                         fbnd[i,j,5] = fold[ip,j,5]
                         fbnd[i,j,6] = fold[ip,jp,6]
                         fbnd[i,j,7] = fold[i,jp,7]
-                        fbnd[i,j,8] = fold[im,jp,8]
+                        fbnd[i,j,1] = fold[i,j,5] -  w[5]*dens*(ex[5]*Uwx + ey[5]*Uwy)/cs_squared# HWBB
+                        fbnd[i,j,2] = fold[i,j,6] -  w[6]*dens*(ex[6]*Uwx + ey[6]*Uwy)/cs_squared# HWBB
+                        fbnd[i,j,8] = fold[i,j,4] -  w[4]*dens*(ex[4]*Uwx + ey[4]*Uwy)/cs_squared# HWBB
+                        
                     if normalx[i,j] == -1 and normaly[i,j] == 0 : 
                         #Right wall 
-                        print('To be coded')
-                        fbnd[i,j,0] = fold[i,j,0]
-                        fbnd[i,j,1] = fold[im,j,1]
-                        fbnd[i,j,2] = fold[im,jm,2]
-                        fbnd[i,j,3] = fold[i,jm,3]
-                        fbnd[i,j,4] = fold[ip,jm,4]
-                        fbnd[i,j,5] = fold[ip,j,5]
-                        fbnd[i,j,6] = fold[ip,jp,6]
+                        #print('To be coded')
+                        #fbnd[i,j,0] = fold[i,j,0]
+                        #fbnd[i,j,1] = fold[im,j,1]
+                        #fbnd[i,j,2] = fold[im,jm,2]
+                        #fbnd[i,j,3] = fold[i,jm,3]
+                        #fbnd[i,j,4] = fold[ip,jm,4]
+                        #fbnd[i,j,5] = fold[ip,j,5]
+                        #fbnd[i,j,6] = fold[ip,jp,6]
+                        #fbnd[i,j,7] = fold[i,jp,7]
+                        #fbnd[i,j,8] = fold[im,jp,8]
+
+                        Uwx = Inletx[i,j] #0.1*cs #Inletx[i,j]
+                        Uwy = Inlety[i,j] #0. #Inlety[i,j]
+                        dens = 1.
+
+                        fbnd[i,j,0] = fold[i,j,0] 
+                        fbnd[i,j,1] = fold[im,j,5] 
+                        fbnd[i,j,2] = fold[im,jm,6] 
+                        fbnd[i,j,3] = fold[i,jm,3] 
                         fbnd[i,j,7] = fold[i,jp,7]
-                        fbnd[i,j,8] = fold[im,jp,8]
+                        fbnd[i,j,8] = fold[im,jp,4] 
+                        fbnd[i,j,4] = fold[i,j,8] -  w[8]*dens*(ex[8]*Uwx + ey[8]*Uwy)/cs_squared#
+                        fbnd[i,j,5] = fold[i,j,1] -  w[1]*dens*(ex[1]*Uwx + ey[1]*Uwy)/cs_squared#
+                        fbnd[i,j,6] = fold[i,j,2] -  w[2]*dens*(ex[2]*Uwx + ey[2]*Uwy)/cs_squared#
+        j = 1
+        while j < Ny - 1 : 
+            i = Nx-1
+            if label[i,j] == 2:
+                #ip = (i + 1 + Nx) % Nx # Doesn't exists
+                im = (i - 1 + Nx) % Nx # Nx-2
+                jp = (j + 1 + Ny) % Ny
+                jm = (j - 1 + Ny) % Ny
+                #right wall
+                for q in range(Q):
+                    fbnd[i,j,q] = fold[im,j,q]
+            j = j + 1
+
         return fbnd

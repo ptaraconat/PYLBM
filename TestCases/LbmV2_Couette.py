@@ -13,13 +13,13 @@ vforce = 0
 ##Numerical parameters 
 Solver = D2Q9() 
 Dt = 0.000001
-Dx = 0.03#0.015
+Dx = 0.03
 # Calc tau
 Nulb = (nu*Dt)/(Dx * Dx)
 thau = (Nulb/(Solver.cs*Solver.cs)) + 0.5
 
 ##Create Fluid domain and Grid 
-Lx = 0.9
+Lx = 0.3
 Ly = 0.3
 Nx = np.int((Lx/Dx) + 1)
 Ny = np.int((Ly/Dx) + 1)
@@ -33,23 +33,6 @@ normaly = np.zeros((Nx,Ny))
 normalx = np.zeros((Nx,Ny))
 Uwx = np.zeros((Nx,Ny))
 Uwy = np.zeros((Nx,Ny))
-### Channel Case 
-#label[0,:] = 1
-#label[Nx-1,:] = 2 #Outlet
-## Horizontal walls overwritte normals at the corner 
-#label[:,0] = 1 
-#label[:,Ny-1] = 1 
-##
-#normaly[0,:] = 0
-#normalx[0,:] = 1
-#normaly[Nx-1,:] = 0
-#normalx[Nx-1,:] = -1
-## Horizontal walls overwritte normals at the corner 
-#normaly[:,0] = 1
-#normalx[:,0] = 0
-#normaly[:,Ny-1] = -1
-#normalx[:,Ny-1] = 0
-
 ### Couette Case 
 label[:,0] = 1
 label[:,Ny-1] = 1
@@ -61,7 +44,6 @@ normalx[:,Ny-1] = 0
 #
 Uwx[:, 0] = 0.
 Uwx[:,Ny-1] = 0.1 * Solver.cs
-
 
 ##Initial condition 
 ux = np.zeros((Nx,Ny))
@@ -75,7 +57,7 @@ vforce = vforce * ((Dt*Dt)/Dx)
 
 #Temporal loop
 f = Solver.CalcFeq(rho,ux,uy,Nx,Ny,thau,srct =[vforce,0])
-for i in range(501):
+for i in range(5001):
     feq = Solver.CalcFeq(rho,ux,uy,Nx,Ny,thau,srct =[vforce,0])
     fstar = Solver.Collision(f,feq,thau,Nx,Ny,Bnd = label,with_boundaries = True)
     fold = fstar 
@@ -86,17 +68,17 @@ for i in range(501):
     f = fbnd
     ux,uy,rho = Solver.CalcMacro(fstream,Nx,Ny)
     
-    if i%1 == 0 :
+    if i%100 == 0 :
         print(i)
-    if i%100 == 0:
+    if i%1000 == 0:
         plt.contourf(xv,yv,ux,cmap = 'jet')
         plt.colorbar()
-        plt.savefig('ChannelV2'+str(i)+'.png',format = 'png')
+        plt.savefig('CouetteV2'+str(i)+'.png',format = 'png')
         plt.show()
         plt.close()
 
         plt.plot(ux[int(Nx/2),:],'o')
-        plt.savefig('UxProfile'+str(i)+'.png',format = 'png')
+        plt.savefig('CouetteUxProfile'+str(i)+'.png',format = 'png')
         plt.show()
         plt.close()
         
