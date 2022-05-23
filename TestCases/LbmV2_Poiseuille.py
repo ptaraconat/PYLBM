@@ -8,7 +8,7 @@ nu = 1
 Pref = 101325
 Tref = 300
 Rgas = 287.15
-vforce = 0
+vforce = 9.81
 
 ##Numerical parameters 
 Solver = D2Q9() 
@@ -34,33 +34,13 @@ normalx = np.zeros((Nx,Ny))
 Uwx = np.zeros((Nx,Ny))
 Uwy = np.zeros((Nx,Ny))
 ### Channel Case 
-label[0,:] = 1
-label[Nx-1,:] = 2 #Outlet
-## Horizontal walls overwritte normals at the corner 
 label[:,0] = 1 
 label[:,Ny-1] = 1 
 ##
-normaly[0,:] = 0
-normalx[0,:] = 1
-normaly[Nx-1,:] = 0
-normalx[Nx-1,:] = -1
-## Horizontal walls overwritte normals at the corner 
 normaly[:,0] = 1
 normalx[:,0] = 0
 normaly[:,Ny-1] = -1
 normalx[:,Ny-1] = 0
-
-Uwx[0,:] = 0.1 * Solver.cs
-
-plt.scatter(xv,yv,c=normaly)
-plt.show()
-
-plt.scatter(xv,yv,c=normalx)
-plt.show()
-
-plt.scatter(xv,yv,c=label)
-plt.show()
-
 
 ##Initial condition 
 ux = np.zeros((Nx,Ny))
@@ -90,12 +70,12 @@ for i in range(501):
     if i%100 == 0:
         plt.contourf(xv,yv,ux,cmap = 'jet')
         plt.colorbar()
-        plt.savefig('ChannelV2'+str(i)+'.png',format = 'png')
+        plt.savefig('PoiseuilleV2'+str(i)+'.png',format = 'png')
         plt.show()
         plt.close()
 
         plt.plot(ux[int(Nx/2),:],'o')
-        plt.savefig('UxProfile'+str(i)+'.png',format = 'png')
+        plt.savefig('UxPoiseuille'+str(i)+'.png',format = 'png')
         plt.show()
         plt.close()
         

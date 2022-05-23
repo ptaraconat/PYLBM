@@ -67,7 +67,7 @@ class Solver():
         #print('Collision step')
         for i in range(Nx): 
             for j in range(Ny):
-                if (Bnd[i,j] == 0) or (Bnd[i,j] == 1):
+                if (Bnd[i,j] == 0) or (Bnd[i,j] == 1) or (Bnd[i,j] == 2):
                     for q in range(Q):
                         #fstar[i,j,q] = (1 - Dt/thau)*f[i,j,q] + (Dt/thau)*feq[i,j,q]
                         fstar[i,j,q] = f[i,j,q] -  (f[i,j,q]-feq[i,j,q])/thau           
@@ -154,84 +154,6 @@ class D2Q9(Solver):
                     fstream[i,j,7] = f[i,jp,7]
                     fstream[i,j,8] = f[im,jp,8]
         return fstream
-    
-    def WallBnd3(self,fold,f,label,normalx,normaly,Nx,Ny): 
-        ex = self.ex
-        ey = self.ey
-        w = self.w
-        Q = self.Q
-        cs = self.cs
-        
-        fbnd = f
-        for i in range(Nx):
-            j = 0 
-            ip = (i + 1 + Nx) % Nx
-            im = (i - 1 + Nx) % Nx
-            jp = 1
-            # bottom Wall 
-            fbnd[i,j,0] = fold[i,j,0]
-            fbnd[i,j,1] = fold[im,j,1]
-            fbnd[i,j,2] = fold[i,j,6] # HWBB
-            fbnd[i,j,3] = fold[i,j,7] # HWBB
-            fbnd[i,j,4] = fold[i,j,8] # HWBB
-            fbnd[i,j,5] = fold[ip,j,5]
-            fbnd[i,j,6] = fold[ip,jp,6]
-            fbnd[i,j,7] = fold[i,jp,7]
-            fbnd[i,j,8] = fold[im,jp,8]
-        for i in range(Nx):
-            j = Ny - 1 
-            ip = (i + 1 + Nx) % Nx
-            im = (i - 1 + Nx) % Nx
-            jm = Ny-2
-            # Top Wall 
-            fbnd[i,j,0] = fold[i,j,0]
-            fbnd[i,j,1] = fold[im,j,1]
-            fbnd[i,j,2] = fold[im,jm,2]
-            fbnd[i,j,3] = fold[i,jm,3]
-            fbnd[i,j,4] = fold[ip,jm,4]
-            fbnd[i,j,5] = fold[ip,j,5]
-            fbnd[i,Ny-1,6] = fold[i,Ny-1,2]
-            fbnd[i,Ny-1,7] = fold[i,Ny-1,3]
-            fbnd[i,Ny-1,8] = fold[i,Ny-1,4]
-        
-        j = 1 
-        while j < Ny-1:
-        #for j in range(Ny):
-            i = 0 
-            ip = (i + 1 + Nx) % Nx # 1
-            #im = (i - 1 + Nx) % Nx # Doesn't exists 
-            jp = (j + 1 + Ny) % Ny
-            jm = (j - 1 + Ny) % Ny
-            
-            # Left Wall 
-            fbnd[i,j,0] = fold[i,j,0] 
-            fbnd[i,j,3] = fold[i,jm,3]
-            fbnd[i,j,4] = fold[ip,jm,4]
-            fbnd[i,j,5] = fold[ip,j,5]
-            fbnd[i,j,6] = fold[ip,jp,6]
-            fbnd[i,j,7] = fold[i,jp,7]
-            
-            cs_squared = cs * cs 
-            Uwx = 0.1 * cs 
-            Uwy = 0.
-            dens = 1.
-            fbnd[i,j,1] = fold[i,j,5] -  w[5]*dens*(ex[5]*Uwx + ey[5]*Uwy)/cs_squared#+ Uw
-            fbnd[i,j,2] = fold[i,j,6] -  w[6]*dens*(ex[6]*Uwx + ey[6]*Uwy)/cs_squared#-  (1/(6*c))*Uw#
-            fbnd[i,j,8] = fold[i,j,4] -  w[4]*dens*(ex[4]*Uwx + ey[4]*Uwy)/cs_squared#+  (1/(6*c))*Uw#
-            j = j + 1
-        
-        j = 1
-        while j < Ny - 1 : 
-            i = Nx-1
-            #ip = (i + 1 + Nx) % Nx # Doesn't exists
-            im = (i - 1 + Nx) % Nx # Nx-2
-            jp = (j + 1 + Ny) % Ny
-            jm = (j - 1 + Ny) % Ny
-            #right wall
-            for q in range(Q):
-                fbnd[i,j,q] = fold[im,j,q]
-            j = j + 1
-        return fbnd
 
     def Bnd_HWBB(self,fold,f,label,normalx,normaly,Nx,Ny,Inletx,Inlety):
         fbnd = f 
@@ -331,17 +253,22 @@ class D2Q9(Solver):
                         fbnd[i,j,4] = fold[i,j,8] -  w[8]*dens*(ex[8]*Uwx + ey[8]*Uwy)/cs_squared#
                         fbnd[i,j,5] = fold[i,j,1] -  w[1]*dens*(ex[1]*Uwx + ey[1]*Uwy)/cs_squared#
                         fbnd[i,j,6] = fold[i,j,2] -  w[2]*dens*(ex[2]*Uwx + ey[2]*Uwy)/cs_squared#
-        j = 1
-        while j < Ny - 1 : 
-            i = Nx-1
-            if label[i,j] == 2:
-                #ip = (i + 1 + Nx) % Nx # Doesn't exists
-                im = (i - 1 + Nx) % Nx # Nx-2
-                jp = (j + 1 + Ny) % Ny
-                jm = (j - 1 + Ny) % Ny
-                #right wall
-                for q in range(Q):
-                    fbnd[i,j,q] = fold[im,j,q]
-            j = j + 1
 
+                if label[i,j] == 2 : 
+                    if normalx[i,j] == 0 and normaly[i,j] == 1:
+                        #Bottom wall 
+                        for q in range(Q):
+                            fbnd[i,j,q] = fold[i,jp,q]
+                    if normalx[i,j] == 0 and normaly[i,j] == -1:
+                        #Top wall 
+                        for q in range(Q):
+                            fbnd[i,j,q] = fold[i,jm,q]
+                    if normalx[i,j] == 1 and normal[i,j] == 0:
+                        #left wall 
+                        for q in range(Q):
+                            fbnd[i,j,q] = fold[ip,j,q]
+                    if normalx[i,j] == -1 and normaly[i,j] == 0 : 
+                        #Right wall 
+                        for q in range(Q): 
+                            fbnd[i,j,q] = fold[im,j,q]
         return fbnd
